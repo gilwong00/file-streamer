@@ -6,13 +6,10 @@ import (
 	"github.com/gilwong00/file-streamer/internal/server/transport"
 )
 
-const (
-	httpServerPort          = 3333
-	connectRPCServerAddress = 6666
-)
-
-func StartServer() {
+func StartServer() error {
 	if err := transport.InitializeTransports(); err != nil {
-		log.Fatalf("server error: %v", err)
+		log.Printf("server error: %v", err)
+		return err
 	}
+	return nil
 }

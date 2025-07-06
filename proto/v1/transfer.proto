@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package transfer.v1;
 
-option go_package = "github.com/gilwong00/gen/transfer/v1;transferv1";
-
 service TransferService {
   rpc GetFileSize(GetFileSizeRequest) returns (GetFileSizeResponse);
   rpc StreamFile(StreamFileRequest) returns (stream StreamFileResponse);

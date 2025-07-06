@@ -1,11 +1,8 @@
 package storage
 
-type BlobStorage struct {
-	bucketName string
+type Client interface {
 }
 
-func NewBlobStorage(bucketName string) (*BlobStorage, error) {
-	return &BlobStorage{
-		bucketName: bucketName,
-	}, nil
+func NewStorageClient(bucketName string) (Client, error) {
+	return newClient(bucketName)
 }

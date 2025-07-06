@@ -10,25 +10,27 @@ import (
 const (
 	httpServerPort          = 3333
 	connectRPCServerAddress = 6666
+	fileDirectoryName       = "files"
 )
 
 func InitializeTransports() error {
-	errs := make(chan error, 2)
+	errors := make(chan error, 2)
 	httpServer := httptransport.NewHttpServer(httpServerPort)
-	connectRPCServer, err := grpctransport.NewConnectRPCServer(fmt.Sprintf(":%v", connectRPCServerAddress), "files")
+	connectRPCServer, err := grpctransport.NewConnectRPCServer(
+		fmt.Sprintf(":%v", connectRPCServerAddress),
+		fileDirectoryName,
+	)
 	if err != nil {
 		return err
 	}
-
 	go func() {
-		errs <- httpServer.Run()
+		errors <- httpServer.Run()
 	}()
 
 	go func() {
-		errs <- connectRPCServer.StartServer()
+		errors <- connectRPCServer.StartServer()
 	}()
-
 	// Wait for the first error
-	err = <-errs
+	err = <-errors
 	return err
 }

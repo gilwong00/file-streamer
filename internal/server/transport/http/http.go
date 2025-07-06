@@ -43,7 +43,7 @@ func (s *httpServer) Run() error {
 	}
 	// start the server
 	go func() {
-		fmt.Printf("Starting server on port %v\n", s.port)
+		log.Printf("Starting server on port %v\n", s.port)
 		if err := server.ListenAndServe(); err != nil {
 			fmt.Printf("Error starting server: %s", err.Error())
 			os.Exit(1)
