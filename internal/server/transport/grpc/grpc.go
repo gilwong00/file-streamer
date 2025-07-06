@@ -4,14 +4,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gilwong00/file-streamer/internal/gen/transferconnect"
+	"github.com/gilwong00/file-streamer/internal/gen/proto/v1/transferv1connect"
 	"github.com/gilwong00/file-streamer/internal/pkg/storage"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
 type connectRPCServer struct {
-	transferconnect.UnimplementedTransferServiceHandler
+	transferv1connect.UnimplementedTransferServiceHandler
 	address string
 	storage *storage.BlobStorage
 }
@@ -29,7 +29,7 @@ func NewConnectRPCServer(address string, bucketName string) (*connectRPCServer, 
 
 func (s *connectRPCServer) StartServer() error {
 	mux := http.NewServeMux()
-	path, handler := transferconnect.NewTransferServiceHandler(&connectRPCServer{})
+	path, handler := transferv1connect.NewTransferServiceHandler(&connectRPCServer{})
 	mux.Handle(path, handler)
 	if err := http.ListenAndServe(
 		s.address,
