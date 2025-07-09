@@ -1,8 +1,9 @@
 package transport
 
 import (
-	"fmt"
+	"context"
 
+	"github.com/gilwong00/file-streamer/internal/pkg/config"
 	grpctransport "github.com/gilwong00/file-streamer/internal/server/transport/grpc"
 	httptransport "github.com/gilwong00/file-streamer/internal/server/transport/http"
 )
@@ -13,20 +14,16 @@ const (
 	fileDirectoryName       = "files"
 )
 
-func InitializeTransports() error {
+func InitializeTransports(ctx context.Context, config *config.Config) error {
 	errors := make(chan error, 2)
-	httpServer := httptransport.NewHttpServer(httpServerPort)
-	connectRPCServer, err := grpctransport.NewConnectRPCServer(
-		fmt.Sprintf(":%v", connectRPCServerAddress),
-		fileDirectoryName,
-	)
+	httpServer := httptransport.NewHttpServer(ctx, config)
+	connectRPCServer, err := grpctransport.NewConnectRPCServer(ctx, config)
 	if err != nil {
 		return err
 	}
 	go func() {
 		errors <- httpServer.Run()
 	}()
-
 	go func() {
 		errors <- connectRPCServer.StartServer()
 	}()

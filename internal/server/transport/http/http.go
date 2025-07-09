@@ -10,22 +10,25 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gilwong00/file-streamer/internal/pkg/config"
 	"github.com/gilwong00/file-streamer/internal/pkg/fileutils"
 )
 
 type httpServer struct {
-	ctx  context.Context
-	port int
+	ctx              context.Context
+	port             int
+	uploadFolderName string
 }
 
 const (
-	UploadFolderName   = "files"
 	MinCompressionSize = 8 * 1024 // 8kb
 )
 
-func NewHttpServer(port int) *httpServer {
+func NewHttpServer(ctx context.Context, config *config.Config) *httpServer {
 	return &httpServer{
-		port: port,
+		ctx:              ctx,
+		port:             config.HTTPServerPort,
+		uploadFolderName: config.FileDirectoryName,
 	}
 }
 
@@ -69,14 +72,12 @@ func (s *httpServer) headHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	_, stat, file, err := fileutils.OpenFile(fileName, UploadFolderName)
+	_, stat, file, err := fileutils.OpenFile(fileName, s.uploadFolderName)
 	if err != nil {
 		fileutils.HandleFileOpenError(w, err)
 		return
 	}
 	defer file.Close()
-
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 	w.WriteHeader(http.StatusOK)
 }
