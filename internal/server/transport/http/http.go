@@ -3,6 +3,7 @@ package httptransport
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -12,23 +13,34 @@ import (
 
 	"github.com/gilwong00/file-streamer/internal/pkg/config"
 	"github.com/gilwong00/file-streamer/internal/pkg/fileutils"
+	"github.com/gilwong00/file-streamer/internal/pkg/storage"
+	"github.com/minio/minio-go/v7"
 )
 
 type httpServer struct {
 	ctx              context.Context
 	port             int
 	uploadFolderName string
+	storageClient    storage.Client
+	bucketName       string
 }
 
 const (
 	MinCompressionSize = 8 * 1024 // 8kb
 )
 
-func NewHttpServer(ctx context.Context, config *config.Config) *httpServer {
+func NewHttpServer(
+	ctx context.Context,
+	config *config.Config,
+	storageClient storage.Client,
+	bucketName string,
+) *httpServer {
 	return &httpServer{
 		ctx:              ctx,
 		port:             config.HTTPServerPort,
 		uploadFolderName: config.FileDirectoryName,
+		storageClient:    storageClient,
+		bucketName:       bucketName,
 	}
 }
 
@@ -67,19 +79,61 @@ func (s *httpServer) Run() error {
 }
 
 func (s *httpServer) headHandler(w http.ResponseWriter, r *http.Request) {
+	// fileName := r.PathValue("filename")
+	// if err := fileutils.ValidateFileName(fileName); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusBadRequest)
+	// 	return
+	// }
+	// _, stat, file, err := fileutils.OpenFile(fileName, s.uploadFolderName)
+	// if err != nil {
+	// 	fileutils.HandleFileOpenError(w, err)
+	// 	return
+	// }
+	// defer file.Close()
+	// w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	// w.WriteHeader(http.StatusOK)
+
+	// using minio instead of writing to disk
 	fileName := r.PathValue("filename")
+	if fileName == "" {
+		http.Error(w, "missing fileName", http.StatusBadRequest)
+		return
+	}
 	if err := fileutils.ValidateFileName(fileName); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, stat, file, err := fileutils.OpenFile(fileName, s.uploadFolderName)
+	info, err := s.storageClient.GetObjectInfo(r.Context(), s.bucketName, fileName)
 	if err != nil {
-		fileutils.HandleFileOpenError(w, err)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	defer file.Close()
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size))
+	w.Header().Set("Accept-Ranges", "bytes")
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *httpServer) getHandler(w http.ResponseWriter, r *http.Request) {}
+func (s *httpServer) getHandler(w http.ResponseWriter, r *http.Request) {
+	fileName := r.PathValue("filename")
+	if fileName == "" {
+		http.Error(w, "missing fileName", http.StatusBadRequest)
+		return
+	}
+	if err := fileutils.ValidateFileName(fileName); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	obj, err := s.storageClient.GetObject(r.Context(), s.bucketName, fileName, minio.GetObjectOptions{})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	defer obj.Close()
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	if _, err := io.Copy(w, obj); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}

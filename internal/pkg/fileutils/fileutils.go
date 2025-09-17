@@ -21,7 +21,6 @@ func OpenFile(fileName string, folderName string) (string, os.FileInfo, *os.File
 		return "", nil, nil, err
 	}
 	filePath := path.Join(dir, folderName, fileName)
-
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", nil, nil, err

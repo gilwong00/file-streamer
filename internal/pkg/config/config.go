@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -19,6 +20,7 @@ type Config struct {
 	MinioAccessKeyID        string `mapstructure:"MINIO_ACCESS_KEY_ID"`
 	MinioAccessKey          string `mapstructure:"MINIO_ACCESS_KEY"`
 	MinioUseSSL             bool   `mapstructure:"MINIO_USE_SSL"`
+	BucketName              string `mapstructure:"BUCKET_NAME"`
 }
 
 // NewConfig loads configuration from environment variables and optionally
@@ -27,9 +29,21 @@ type Config struct {
 // It returns a Config struct populated with the retrieved values.
 // If any error occurs during unmarshaling, the error is returned.
 func NewConfig() (*Config, error) {
-	if _, err := os.Stat("../../../.env"); err != nil {
-		if err := godotenv.Load(); err != nil {
-			return nil, fmt.Errorf("error loading .env file: %v", err)
+	// This checks if the application is running in a local development environment
+	// by looking for a `.env` file in the repo root (current working directory).
+	// If the file exists, it loads environment variables from it using godotenv.
+	// This allows local development without requiring environment variables to be set globally.
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("getting current directory: %w", err)
+	}
+	// Assume repo root contains .env; adjust relative path as needed
+	envPath := filepath.Join(cwd, ".env")
+	fmt.Println(">>>> path", envPath)
+	// Check if .env exists
+	if _, err := os.Stat(envPath); err == nil {
+		if err := godotenv.Load(envPath); err != nil {
+			return nil, fmt.Errorf("error loading .env file: %w", err)
 		}
 	}
 
@@ -37,6 +51,7 @@ func NewConfig() (*Config, error) {
 	viper.SetDefault("MINIO_USE_SSL", false)
 	viper.SetDefault("HTTP_SERVER_PORT", 3333)
 	viper.SetDefault("CONNECT_RPC_SERVER_PORT", 5555)
+	viper.SetDefault("BUCKET_NAME", "files")
 	viper.AutomaticEnv()
 
 	viper.BindEnv("HTTP_SERVER_PORT")
@@ -46,6 +61,8 @@ func NewConfig() (*Config, error) {
 	viper.BindEnv("MINIO_ACCESS_KEY_ID")
 	viper.BindEnv("MINIO_ACCESS_KEY")
 	viper.BindEnv("MINIO_USE_SSL")
+
+	viper.BindEnv("BUCKET_NAME")
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {

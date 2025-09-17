@@ -2,7 +2,6 @@ package transferservice
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 	transferv1 "github.com/gilwong00/file-streamer/internal/gen/proto/v1"
@@ -12,5 +11,11 @@ func (s *transferService) GetFileSize(
 	ctx context.Context,
 	req *connect.Request[transferv1.GetFileSizeRequest],
 ) (*connect.Response[transferv1.GetFileSizeResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("this method is not implemented"))
+	info, err := s.storageClient.GetObjectInfo(ctx, s.bucketName, req.Msg.FileName)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+	return connect.NewResponse(&transferv1.GetFileSizeResponse{
+		Size: info.Size,
+	}), nil
 }

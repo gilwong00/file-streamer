@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -40,9 +41,10 @@ func newClient(
 	}, nil
 }
 
-// CreateBucket creates a bucket with the given name if it does not already exist.
+// CreateBucket creates a new bucket with the specified name if it does not already exist.
 //
-// It first checks if the bucket exists to avoid conflicts.
+// It first checks whether the bucket exists to avoid conflicts. If the bucket already exists,
+// it returns ErrBucketAlreadyExists. Otherwise, it creates the bucket using MinIO client options.
 func (b *blobStorageClient) CreateBucket(ctx context.Context, bucketName string) error {
 	exists, err := b.DoesBucketExists(ctx, bucketName)
 	if err != nil {
@@ -54,7 +56,69 @@ func (b *blobStorageClient) CreateBucket(ctx context.Context, bucketName string)
 	return b.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
 }
 
-// DoesBucketExists checks whether the specified bucket exists.
+// DoesBucketExists checks whether a bucket with the specified name exists.
+//
+// Returns true if the bucket exists, false otherwise. Returns an error
+// if the existence check could not be performed.
 func (b *blobStorageClient) DoesBucketExists(ctx context.Context, bucketName string) (bool, error) {
 	return b.client.BucketExists(ctx, bucketName)
+}
+
+// GetObject retrieves the full object from the specified bucket.
+//
+// Returns a MinIO object (*minio.Object), allowing the caller to read the object
+// or perform MinIO-specific operations. Returns an error if the object does not exist
+// or cannot be accessed.
+func (b *blobStorageClient) GetObject(
+	ctx context.Context,
+	bucketName,
+	objectName string,
+	opts minio.GetObjectOptions,
+) (*minio.Object, error) {
+	return b.client.GetObject(ctx, bucketName, objectName, opts)
+}
+
+// GetObjectWithRange retrieves a portion of the object using start and end byte offsets.
+//
+// This method is used for ranged streaming, resumable downloads, or partial reads.
+// Returns an io.ReadCloser for the specified byte range. Returns an error if the range
+// is invalid or the object cannot be accessed.
+func (b *blobStorageClient) GetObjectWithRange(
+	ctx context.Context,
+	bucketName string,
+	objectName string,
+	start int64,
+	end int64,
+) (io.ReadCloser, error) {
+	opts := minio.GetObjectOptions{}
+	if err := opts.SetRange(start, end); err != nil {
+		return nil, fmt.Errorf("invalid range: %w", err)
+	}
+	obj, err := b.client.GetObject(ctx, bucketName, objectName, opts)
+	if err != nil {
+		return nil, fmt.Errorf("getting ranged object: %w", err)
+	}
+	// Ensure object exists
+	if _, err := obj.Stat(); err != nil {
+		return nil, fmt.Errorf("stat object: %w", err)
+	}
+	return obj, nil
+}
+
+// GetObjectInfo retrieves metadata about the specified object.
+//
+// Returns an ObjectInfo containing the object's size and optionally other metadata fields.
+// Returns an error if the object does not exist or cannot be accessed.
+func (b *blobStorageClient) GetObjectInfo(
+	ctx context.Context,
+	bucketName string,
+	objectName string,
+) (ObjectInfo, error) {
+	info, err := b.client.StatObject(ctx, bucketName, objectName, minio.StatObjectOptions{})
+	if err != nil {
+		return ObjectInfo{}, fmt.Errorf("stat object: %w", err)
+	}
+	return ObjectInfo{
+		Size: info.Size,
+	}, nil
 }

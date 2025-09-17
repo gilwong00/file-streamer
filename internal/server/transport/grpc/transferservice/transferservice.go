@@ -6,11 +6,16 @@ import (
 )
 
 type transferService struct {
-	storageClient *storage.Client
+	storageClient storage.Client
+	bucketName    string
 }
 
-func NewTransferService(storageClient *storage.Client) transferv1connect.TransferServiceHandler {
+func NewTransferService(
+	storageClient storage.Client,
+	bucketName string,
+) transferv1connect.TransferServiceHandler {
 	return &transferService{
 		storageClient: storageClient,
+		bucketName:    bucketName,
 	}
 }

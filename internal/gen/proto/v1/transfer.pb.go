@@ -237,6 +237,142 @@ func (x *StreamFileResponse) GetOffset() int64 {
 	return 0
 }
 
+type UploadFileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileName      string                 `protobuf:"bytes,1,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	Chunk         []byte                 `protobuf:"bytes,2,opt,name=chunk,proto3" json:"chunk,omitempty"`
+	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	Compressed    bool                   `protobuf:"varint,4,opt,name=compressed,proto3" json:"compressed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadFileRequest) Reset() {
+	*x = UploadFileRequest{}
+	mi := &file_proto_v1_transfer_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadFileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadFileRequest) ProtoMessage() {}
+
+func (x *UploadFileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_v1_transfer_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadFileRequest.ProtoReflect.Descriptor instead.
+func (*UploadFileRequest) Descriptor() ([]byte, []int) {
+	return file_proto_v1_transfer_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UploadFileRequest) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *UploadFileRequest) GetChunk() []byte {
+	if x != nil {
+		return x.Chunk
+	}
+	return nil
+}
+
+func (x *UploadFileRequest) GetOffset() int64 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *UploadFileRequest) GetCompressed() bool {
+	if x != nil {
+		return x.Compressed
+	}
+	return false
+}
+
+type UploadFileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FileName      string                 `protobuf:"bytes,1,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	BytesReceived int64                  `protobuf:"varint,2,opt,name=bytes_received,json=bytesReceived,proto3" json:"bytes_received,omitempty"` // server can send periodic progress updates
+	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
+	ErrorMessage  string                 `protobuf:"bytes,4,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadFileResponse) Reset() {
+	*x = UploadFileResponse{}
+	mi := &file_proto_v1_transfer_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadFileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadFileResponse) ProtoMessage() {}
+
+func (x *UploadFileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_v1_transfer_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadFileResponse.ProtoReflect.Descriptor instead.
+func (*UploadFileResponse) Descriptor() ([]byte, []int) {
+	return file_proto_v1_transfer_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UploadFileResponse) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *UploadFileResponse) GetBytesReceived() int64 {
+	if x != nil {
+		return x.BytesReceived
+	}
+	return 0
+}
+
+func (x *UploadFileResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UploadFileResponse) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
 var File_proto_v1_transfer_proto protoreflect.FileDescriptor
 
 const file_proto_v1_transfer_proto_rawDesc = "" +
@@ -257,11 +393,25 @@ const file_proto_v1_transfer_proto_rawDesc = "" +
 	"\n" +
 	"compressed\x18\x02 \x01(\bR\n" +
 	"compressed\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x03R\x06offset2\xb4\x01\n" +
+	"\x06offset\x18\x03 \x01(\x03R\x06offset\"~\n" +
+	"\x11UploadFileRequest\x12\x1b\n" +
+	"\tfile_name\x18\x01 \x01(\tR\bfileName\x12\x14\n" +
+	"\x05chunk\x18\x02 \x01(\fR\x05chunk\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x03R\x06offset\x12\x1e\n" +
+	"\n" +
+	"compressed\x18\x04 \x01(\bR\n" +
+	"compressed\"\x97\x01\n" +
+	"\x12UploadFileResponse\x12\x1b\n" +
+	"\tfile_name\x18\x01 \x01(\tR\bfileName\x12%\n" +
+	"\x0ebytes_received\x18\x02 \x01(\x03R\rbytesReceived\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\x12#\n" +
+	"\rerror_message\x18\x04 \x01(\tR\ferrorMessage2\x87\x02\n" +
 	"\x0fTransferService\x12P\n" +
 	"\vGetFileSize\x12\x1f.transfer.v1.GetFileSizeRequest\x1a .transfer.v1.GetFileSizeResponse\x12O\n" +
 	"\n" +
-	"StreamFile\x12\x1e.transfer.v1.StreamFileRequest\x1a\x1f.transfer.v1.StreamFileResponse0\x01B\xb2\x01\n" +
+	"StreamFile\x12\x1e.transfer.v1.StreamFileRequest\x1a\x1f.transfer.v1.StreamFileResponse0\x01\x12Q\n" +
+	"\n" +
+	"UploadFile\x12\x1e.transfer.v1.UploadFileRequest\x1a\x1f.transfer.v1.UploadFileResponse(\x010\x01B\xb2\x01\n" +
 	"\x0fcom.transfer.v1B\rTransferProtoP\x01ZCgithub.com/gilwong00/file-streamer/internal/gen/proto/v1;transferv1\xa2\x02\x03TXX\xaa\x02\vTransfer.V1\xca\x02\vTransfer\\V1\xe2\x02\x17Transfer\\V1\\GPBMetadata\xea\x02\fTransfer::V1b\x06proto3"
 
 var (
@@ -276,20 +426,24 @@ func file_proto_v1_transfer_proto_rawDescGZIP() []byte {
 	return file_proto_v1_transfer_proto_rawDescData
 }
 
-var file_proto_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_proto_v1_transfer_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_proto_v1_transfer_proto_goTypes = []any{
 	(*GetFileSizeRequest)(nil),  // 0: transfer.v1.GetFileSizeRequest
 	(*GetFileSizeResponse)(nil), // 1: transfer.v1.GetFileSizeResponse
 	(*StreamFileRequest)(nil),   // 2: transfer.v1.StreamFileRequest
 	(*StreamFileResponse)(nil),  // 3: transfer.v1.StreamFileResponse
+	(*UploadFileRequest)(nil),   // 4: transfer.v1.UploadFileRequest
+	(*UploadFileResponse)(nil),  // 5: transfer.v1.UploadFileResponse
 }
 var file_proto_v1_transfer_proto_depIdxs = []int32{
 	0, // 0: transfer.v1.TransferService.GetFileSize:input_type -> transfer.v1.GetFileSizeRequest
 	2, // 1: transfer.v1.TransferService.StreamFile:input_type -> transfer.v1.StreamFileRequest
-	1, // 2: transfer.v1.TransferService.GetFileSize:output_type -> transfer.v1.GetFileSizeResponse
-	3, // 3: transfer.v1.TransferService.StreamFile:output_type -> transfer.v1.StreamFileResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: transfer.v1.TransferService.UploadFile:input_type -> transfer.v1.UploadFileRequest
+	1, // 3: transfer.v1.TransferService.GetFileSize:output_type -> transfer.v1.GetFileSizeResponse
+	3, // 4: transfer.v1.TransferService.StreamFile:output_type -> transfer.v1.StreamFileResponse
+	5, // 5: transfer.v1.TransferService.UploadFile:output_type -> transfer.v1.UploadFileResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -306,7 +460,7 @@ func file_proto_v1_transfer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_v1_transfer_proto_rawDesc), len(file_proto_v1_transfer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

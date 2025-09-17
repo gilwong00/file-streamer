@@ -12,7 +12,7 @@ func main() {
 	ctx := context.Background()
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatalf("Errpr unmarshalling config")
+		log.Fatalf("Error unmarshalling config")
 	}
 	// TODO: will need to add logging and maybe a better implementation
 	if err := server.StartServer(ctx, cfg); err != nil {

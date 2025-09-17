@@ -26,27 +26,22 @@ type connectRPCServer struct {
 	transferv1connect.UnimplementedTransferServiceHandler
 	ctx           context.Context
 	address       string
-	storageClient *storage.Client
+	storageClient storage.Client
 }
 
 // NewConnectRPCServer creates and returns a new ConnectRPC server instance.
 //
 // It initializes the storage client from the given config and binds
 // the server to the configured port.
-func NewConnectRPCServer(ctx context.Context, config *config.Config) (*connectRPCServer, error) {
-	storageClient, err := storage.NewStorageClient(
-		config.MinioHost,
-		config.MinioAccessKeyID,
-		config.MinioAccessKey,
-		config.MinioUseSSL,
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewConnectRPCServer(
+	ctx context.Context,
+	config *config.Config,
+	storageClient storage.Client,
+) (*connectRPCServer, error) {
 	return &connectRPCServer{
 		ctx:           ctx,
 		address:       fmt.Sprintf(":%v", 5555),
-		storageClient: &storageClient,
+		storageClient: storageClient,
 	}, nil
 }
 
@@ -62,7 +57,7 @@ func NewConnectRPCServer(ctx context.Context, config *config.Config) (*connectRP
 // The shutdown process waits up to 10 seconds for active connections to close.
 func (s *connectRPCServer) StartServer() error {
 	mux := http.NewServeMux()
-	transferService := transferservice.NewTransferService(s.storageClient)
+	transferService := transferservice.NewTransferService(s.storageClient, "")
 	transferPath, transferHandler := transferv1connect.NewTransferServiceHandler(transferService)
 	mux.Handle(transferPath, transferHandler)
 	srv := &http.Server{

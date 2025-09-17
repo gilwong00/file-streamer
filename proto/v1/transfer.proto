@@ -5,6 +5,9 @@ package transfer.v1;
 service TransferService {
   rpc GetFileSize(GetFileSizeRequest) returns (GetFileSizeResponse);
   rpc StreamFile(StreamFileRequest) returns (stream StreamFileResponse);
+
+  // Bi-directional streaming for uploads
+  rpc UploadFile(stream UploadFileRequest) returns (stream UploadFileResponse);
 }
 
 message GetFileSizeRequest {
@@ -26,4 +29,18 @@ message StreamFileResponse {
   bytes chunk = 1;
   bool compressed = 2;
   int64 offset = 3;
+}
+
+message UploadFileRequest {
+  string file_name = 1;
+  bytes chunk = 2;
+  int64 offset = 3;
+  bool compressed = 4;
+}
+
+message UploadFileResponse {
+  string file_name = 1;
+  int64 bytes_received = 2; // server can send periodic progress updates
+  bool success = 3;
+  string error_message = 4;
 }

@@ -39,12 +39,17 @@ const (
 	// TransferServiceStreamFileProcedure is the fully-qualified name of the TransferService's
 	// StreamFile RPC.
 	TransferServiceStreamFileProcedure = "/transfer.v1.TransferService/StreamFile"
+	// TransferServiceUploadFileProcedure is the fully-qualified name of the TransferService's
+	// UploadFile RPC.
+	TransferServiceUploadFileProcedure = "/transfer.v1.TransferService/UploadFile"
 )
 
 // TransferServiceClient is a client for the transfer.v1.TransferService service.
 type TransferServiceClient interface {
 	GetFileSize(context.Context, *connect.Request[v1.GetFileSizeRequest]) (*connect.Response[v1.GetFileSizeResponse], error)
 	StreamFile(context.Context, *connect.Request[v1.StreamFileRequest]) (*connect.ServerStreamForClient[v1.StreamFileResponse], error)
+	// Bi-directional streaming for uploads
+	UploadFile(context.Context) *connect.BidiStreamForClient[v1.UploadFileRequest, v1.UploadFileResponse]
 }
 
 // NewTransferServiceClient constructs a client for the transfer.v1.TransferService service. By
@@ -70,6 +75,12 @@ func NewTransferServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(transferServiceMethods.ByName("StreamFile")),
 			connect.WithClientOptions(opts...),
 		),
+		uploadFile: connect.NewClient[v1.UploadFileRequest, v1.UploadFileResponse](
+			httpClient,
+			baseURL+TransferServiceUploadFileProcedure,
+			connect.WithSchema(transferServiceMethods.ByName("UploadFile")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -77,6 +88,7 @@ func NewTransferServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 type transferServiceClient struct {
 	getFileSize *connect.Client[v1.GetFileSizeRequest, v1.GetFileSizeResponse]
 	streamFile  *connect.Client[v1.StreamFileRequest, v1.StreamFileResponse]
+	uploadFile  *connect.Client[v1.UploadFileRequest, v1.UploadFileResponse]
 }
 
 // GetFileSize calls transfer.v1.TransferService.GetFileSize.
@@ -89,10 +101,17 @@ func (c *transferServiceClient) StreamFile(ctx context.Context, req *connect.Req
 	return c.streamFile.CallServerStream(ctx, req)
 }
 
+// UploadFile calls transfer.v1.TransferService.UploadFile.
+func (c *transferServiceClient) UploadFile(ctx context.Context) *connect.BidiStreamForClient[v1.UploadFileRequest, v1.UploadFileResponse] {
+	return c.uploadFile.CallBidiStream(ctx)
+}
+
 // TransferServiceHandler is an implementation of the transfer.v1.TransferService service.
 type TransferServiceHandler interface {
 	GetFileSize(context.Context, *connect.Request[v1.GetFileSizeRequest]) (*connect.Response[v1.GetFileSizeResponse], error)
 	StreamFile(context.Context, *connect.Request[v1.StreamFileRequest], *connect.ServerStream[v1.StreamFileResponse]) error
+	// Bi-directional streaming for uploads
+	UploadFile(context.Context, *connect.BidiStream[v1.UploadFileRequest, v1.UploadFileResponse]) error
 }
 
 // NewTransferServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -114,12 +133,20 @@ func NewTransferServiceHandler(svc TransferServiceHandler, opts ...connect.Handl
 		connect.WithSchema(transferServiceMethods.ByName("StreamFile")),
 		connect.WithHandlerOptions(opts...),
 	)
+	transferServiceUploadFileHandler := connect.NewBidiStreamHandler(
+		TransferServiceUploadFileProcedure,
+		svc.UploadFile,
+		connect.WithSchema(transferServiceMethods.ByName("UploadFile")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/transfer.v1.TransferService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TransferServiceGetFileSizeProcedure:
 			transferServiceGetFileSizeHandler.ServeHTTP(w, r)
 		case TransferServiceStreamFileProcedure:
 			transferServiceStreamFileHandler.ServeHTTP(w, r)
+		case TransferServiceUploadFileProcedure:
+			transferServiceUploadFileHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -135,4 +162,8 @@ func (UnimplementedTransferServiceHandler) GetFileSize(context.Context, *connect
 
 func (UnimplementedTransferServiceHandler) StreamFile(context.Context, *connect.Request[v1.StreamFileRequest], *connect.ServerStream[v1.StreamFileResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("transfer.v1.TransferService.StreamFile is not implemented"))
+}
+
+func (UnimplementedTransferServiceHandler) UploadFile(context.Context, *connect.BidiStream[v1.UploadFileRequest, v1.UploadFileResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("transfer.v1.TransferService.UploadFile is not implemented"))
 }

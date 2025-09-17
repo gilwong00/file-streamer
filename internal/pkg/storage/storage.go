@@ -1,9 +1,20 @@
 package storage
 
-import "context"
+import (
+	"context"
+	"io"
+
+	"github.com/minio/minio-go/v7"
+)
+
+// ObjectInfo contains metadata about an object in storage.
+type ObjectInfo struct {
+	Size int64
+	// You can add other metadata fields like ContentType, ETag, LastModified, etc.
+}
 
 // Client defines the interface for interacting with an object storage service,
-// supporting bucket creation and existence checks.
+// supporting bucket operations and object retrieval.
 type Client interface {
 	// CreateBucket attempts to create a new bucket with the given name.
 	//
@@ -16,6 +27,25 @@ type Client interface {
 	// Returns true if the bucket exists, false otherwise.
 	// Returns an error if the existence check could not be performed.
 	DoesBucketExists(ctx context.Context, bucketName string) (bool, error)
+
+	// GetObject retrieves the full object from the bucket.
+	//
+	// Returns a MinIO object (*minio.Object) to allow reading and other MinIO-specific operations.
+	// Returns an error if the object does not exist or cannot be accessed.
+	GetObject(ctx context.Context, bucketName, objectName string, opts minio.GetObjectOptions) (*minio.Object, error)
+
+	// GetObjectWithRange retrieves a portion of the object using start and end byte offsets.
+	//
+	// This is used for resumable downloads or partial reads.
+	// Returns an io.ReadCloser for the specified byte range.
+	// Returns an error if the range is invalid or the object cannot be accessed.
+	GetObjectWithRange(ctx context.Context, bucketName, objectName string, start, end int64) (io.ReadCloser, error)
+
+	// GetObjectInfo retrieves metadata about the specified object.
+	//
+	// Returns an ObjectInfo containing the object's size and other optional metadata.
+	// Returns an error if the object does not exist or cannot be accessed.
+	GetObjectInfo(ctx context.Context, bucketName, objectName string) (ObjectInfo, error)
 }
 
 func NewStorageClient(
