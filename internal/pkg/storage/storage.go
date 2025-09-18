@@ -13,6 +13,17 @@ type ObjectInfo struct {
 	// You can add other metadata fields like ContentType, ETag, LastModified, etc.
 }
 
+// GetObjectOptions defines optional parameters for retrieving an object
+// from object storage.
+//
+// Start and End specify a byte range to fetch a portion of the object.
+// If both are zero (the default), the entire object will be retrieved.
+// End is inclusive, so the range includes bytes from Start to End.
+type GetObjectOptions struct {
+	Start int64 // Starting byte offset (inclusive)
+	End   int64 // Ending byte offset (inclusive)
+}
+
 // Client defines the interface for interacting with an object storage service,
 // supporting bucket operations and object retrieval.
 type Client interface {
@@ -32,7 +43,7 @@ type Client interface {
 	//
 	// Returns a MinIO object (*minio.Object) to allow reading and other MinIO-specific operations.
 	// Returns an error if the object does not exist or cannot be accessed.
-	GetObject(ctx context.Context, bucketName, objectName string, opts minio.GetObjectOptions) (*minio.Object, error)
+	GetObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (*minio.Object, error)
 
 	// GetObjectWithRange retrieves a portion of the object using start and end byte offsets.
 	//

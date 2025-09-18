@@ -73,9 +73,24 @@ func (b *blobStorageClient) GetObject(
 	ctx context.Context,
 	bucketName,
 	objectName string,
-	opts minio.GetObjectOptions,
+	opts GetObjectOptions,
 ) (*minio.Object, error) {
-	return b.client.GetObject(ctx, bucketName, objectName, opts)
+	minioOpts := minio.GetObjectOptions{}
+	// Only set range if opts are passed
+	if opts.Start >= 0 && opts.End >= 0 {
+		if err := minioOpts.SetRange(opts.Start, opts.End); err != nil {
+			return nil, fmt.Errorf("invalid range: %w", err)
+		}
+	}
+	obj, err := b.client.GetObject(ctx, bucketName, objectName, minioOpts)
+	if err != nil {
+		return nil, fmt.Errorf("getting object: %w", err)
+	}
+	// Ensure the object actually exists
+	if _, err := obj.Stat(); err != nil {
+		return nil, fmt.Errorf("stat object: %w", err)
+	}
+	return obj, nil
 }
 
 // GetObjectWithRange retrieves a portion of the object using start and end byte offsets.
